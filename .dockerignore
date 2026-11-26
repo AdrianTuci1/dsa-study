@@ -1,0 +1,12 @@
+.git
+.github
+__pycache__
+*.pyc
+.DS_Store
+learning/progress.json
+docs
+problems
+structures
+functions
+experiments
+playground.py

@@ -1,0 +1,338 @@
+{
+ "nodes": [
+  {
+   "id": "00",
+   "concept": "00 Python Essentials",
+   "label": "Python Essentials",
+   "layer": 0
+  },
+  {
+   "id": "01",
+   "concept": "01 Arrays & Hashing",
+   "label": "Arrays & Hashing",
+   "layer": 1
+  },
+  {
+   "id": "08",
+   "concept": "08 Stack",
+   "label": "Stack",
+   "layer": 1
+  },
+  {
+   "id": "09",
+   "concept": "09 Binary Search",
+   "label": "Binary Search",
+   "layer": 1
+  },
+  {
+   "id": "21",
+   "concept": "21 Bit Manipulation",
+   "label": "Bit Manipulation",
+   "layer": 1
+  },
+  {
+   "id": "02",
+   "concept": "02 Two Pointers",
+   "label": "Two Pointers",
+   "layer": 2
+  },
+  {
+   "id": "03",
+   "concept": "03 Sliding Window",
+   "label": "Sliding Window",
+   "layer": 2
+  },
+  {
+   "id": "04",
+   "concept": "04 Fast & Slow Pointers",
+   "label": "Fast & Slow",
+   "layer": 2
+  },
+  {
+   "id": "06",
+   "concept": "06 Cyclic Sort",
+   "label": "Cyclic Sort",
+   "layer": 2
+  },
+  {
+   "id": "22",
+   "concept": "22 Matrix",
+   "label": "Matrix",
+   "layer": 2
+  },
+  {
+   "id": "24",
+   "concept": "24 Math & Geometry",
+   "label": "Math & Geometry",
+   "layer": 2
+  },
+  {
+   "id": "05",
+   "concept": "05 Merge Intervals",
+   "label": "Merge Intervals",
+   "layer": 3
+  },
+  {
+   "id": "07",
+   "concept": "07 In-Place Linked List Reversal",
+   "label": "In-place Reversal",
+   "layer": 3
+  },
+  {
+   "id": "10",
+   "concept": "10 Tree BFS",
+   "label": "Tree BFS",
+   "layer": 3
+  },
+  {
+   "id": "11",
+   "concept": "11 Tree DFS",
+   "label": "Tree DFS",
+   "layer": 3
+  },
+  {
+   "id": "19",
+   "concept": "19 Tries",
+   "label": "Tries",
+   "layer": 3
+  },
+  {
+   "id": "13",
+   "concept": "13 Backtracking",
+   "label": "Backtracking",
+   "layer": 4
+  },
+  {
+   "id": "12",
+   "concept": "12 Two Heaps",
+   "label": "Two Heaps",
+   "layer": 4
+  },
+  {
+   "id": "14",
+   "concept": "14 Graph BFS/DFS",
+   "label": "Graph BFS/DFS",
+   "layer": 4
+  },
+  {
+   "id": "20",
+   "concept": "20 Design",
+   "label": "Design",
+   "layer": 4
+  },
+  {
+   "id": "15",
+   "concept": "15 Topological Sort",
+   "label": "Topological Sort",
+   "layer": 4
+  },
+  {
+   "id": "16",
+   "concept": "16 Union-Find",
+   "label": "Union-Find",
+   "layer": 4
+  },
+  {
+   "id": "17",
+   "concept": "17 Dynamic Programming",
+   "label": "DP",
+   "layer": 5
+  },
+  {
+   "id": "18",
+   "concept": "18 Greedy",
+   "label": "Greedy",
+   "layer": 5
+  },
+  {
+   "id": "23",
+   "concept": "23 Advanced Graphs I",
+   "label": "Advanced Graphs",
+   "layer": 5
+  },
+  {
+   "id": "25",
+   "concept": "25 Advanced DP",
+   "label": "Advanced DP",
+   "layer": 5
+  },
+  {
+   "id": "26",
+   "concept": "26 String Algorithms",
+   "label": "String Algorithms",
+   "layer": 5
+  },
+  {
+   "id": "27",
+   "concept": "27 Advanced Structures",
+   "label": "Advanced Structures",
+   "layer": 6
+  },
+  {
+   "id": "28",
+   "concept": "28 Advanced Techniques",
+   "label": "Advanced Techniques",
+   "layer": 6
+  },
+  {
+   "id": "29",
+   "concept": "29 Advanced Graphs II",
+   "label": "Graphs II",
+   "layer": 6
+  }
+ ],
+ "edges": [
+  [
+   "00",
+   "01"
+  ],
+  [
+   "00",
+   "08"
+  ],
+  [
+   "00",
+   "09"
+  ],
+  [
+   "00",
+   "21"
+  ],
+  [
+   "01",
+   "02"
+  ],
+  [
+   "01",
+   "03"
+  ],
+  [
+   "01",
+   "04"
+  ],
+  [
+   "01",
+   "06"
+  ],
+  [
+   "01",
+   "22"
+  ],
+  [
+   "01",
+   "05"
+  ],
+  [
+   "01",
+   "10"
+  ],
+  [
+   "01",
+   "11"
+  ],
+  [
+   "02",
+   "05"
+  ],
+  [
+   "04",
+   "07"
+  ],
+  [
+   "08",
+   "13"
+  ],
+  [
+   "08",
+   "20"
+  ],
+  [
+   "10",
+   "12"
+  ],
+  [
+   "10",
+   "14"
+  ],
+  [
+   "11",
+   "12"
+  ],
+  [
+   "11",
+   "13"
+  ],
+  [
+   "11",
+   "14"
+  ],
+  [
+   "11",
+   "17"
+  ],
+  [
+   "11",
+   "19"
+  ],
+  [
+   "13",
+   "17"
+  ],
+  [
+   "14",
+   "15"
+  ],
+  [
+   "14",
+   "16"
+  ],
+  [
+   "14",
+   "23"
+  ],
+  [
+   "15",
+   "23"
+  ],
+  [
+   "16",
+   "23"
+  ],
+  [
+   "17",
+   "18"
+  ],
+  [
+   "17",
+   "25"
+  ],
+  [
+   "19",
+   "26"
+  ],
+  [
+   "20",
+   "27"
+  ],
+  [
+   "23",
+   "29"
+  ],
+  [
+   "25",
+   "26"
+  ],
+  [
+   "26",
+   "27"
+  ],
+  [
+   "27",
+   "28"
+  ],
+  [
+   "28",
+   "29"
+  ]
+ ]
+}

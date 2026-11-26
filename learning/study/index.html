@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSA Study</title>
+  <meta name="description" content="Active recall and spaced repetition for DSA patterns.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff">
+  <script>
+    // Apply the saved theme before first paint, so there is no light flash.
+    (function () {
+      try {
+        var stored = window.localStorage.getItem("dsa-study-theme");
+        var dark = stored
+          ? stored === "dark"
+          : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) {
+          document.documentElement.setAttribute("data-theme", "dark");
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", "#0b0b0d");
+        }
+      } catch (err) {}
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23111'/%3E%3Crect x='4' y='4' width='8' height='8' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="row row--head">
+    <div class="brand">DSA <span>Study</span></div>
+    <div class="head-meta">
+      <span id="streakBadge" class="meta">—</span>
+      <button id="themeToggle" class="theme-toggle" type="button"
+              aria-pressed="false" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <span class="theme-toggle__box" aria-hidden="true"></span>
+        <span>Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="row row--nav" aria-label="Main">
+    <button class="tab" data-nav="home">Home</button>
+    <button class="tab" data-nav="session">Session</button>
+    <button class="tab" data-nav="solve">Solve</button>
+    <button class="tab" data-nav="graph">Graph</button>
+    <button class="tab" data-nav="cheatsheet">Cheatsheet</button>
+  </nav>
+
+  <main id="view"></main>
+
+  <footer class="row row--foot">
+    <span id="footLeft">Progress is stored in this browser.</span>
+    <span id="footRight" class="meta"></span>
+  </footer>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

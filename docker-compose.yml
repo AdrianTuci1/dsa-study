@@ -1,0 +1,7 @@
+services:
+  study:
+    build: .
+    image: dsa-study:local
+    ports:
+      - "${DSA_STUDY_PORT:-8765}:8765"
+    restart: unless-stopped
