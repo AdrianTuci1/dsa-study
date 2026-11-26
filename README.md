@@ -28,7 +28,7 @@ drills, a two-pane problem workspace, and a canvas knowledge graph.
 ### Docker (one command)
 
 ```bash
-REPO=your-user/dsa-study
+REPO=AdrianTuci1/dsa-study
 curl -fsSL "https://raw.githubusercontent.com/$REPO/main/run.sh" | DSA_STUDY_REPO="$REPO" bash
 # open http://127.0.0.1:8765/
 ```
@@ -39,10 +39,11 @@ Or from a clone:
 docker compose up --build
 ```
 
-After the `docker` workflow has run on GitHub, the prebuilt image is also available:
+After the `docker` workflow has run on GitHub, the prebuilt image is also available
+(make the GHCR package public in the repository's package settings for anonymous pulls):
 
 ```bash
-docker run --rm -p 8765:8765 ghcr.io/your-user/dsa-study:latest
+docker run --rm -p 8765:8765 ghcr.io/adriantuci1/dsa-study:latest
 ```
 
 The container is stateless: progress and sheets live in your browser's
