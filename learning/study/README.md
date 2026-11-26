@@ -1,7 +1,8 @@
 # Study app
 
 A small web app for active recall: 114 drills across 30 DSA patterns, plus
-14 full problems in a two-pane Solve workspace. Spaced repetition, dark mode,
+101 problems in a two-pane Solve workspace (14 curated with variants and 87
+parsed from `practice/*.py`). Spaced repetition, dark mode,
 a canvas knowledge graph, no dependencies.
 
 The app does **not** bundle content. A tiny Python server reads the source
@@ -37,6 +38,9 @@ The **Solve** tab is a two-pane page for working through full problems:
   document with inline code and Python syntax highlighting.
 - **Toggle:** `Show solution` reveals the solution variants. Each variant has
   its name, complexity and a short note explaining why it works.
+- **Sources:** the `Curated` tab uses `solve_bank.py` (multiple variants);
+  the `practice/` tab reads the problem statements, examples, constraints and
+  your own function from `practice/*.py` at request time.
 - **Right:** your sheet. A plain monospace editor with line numbers, autosaved
   per problem in `localStorage`. `Mark solved` tracks completion.
 
@@ -115,7 +119,8 @@ There is **no build step**. `serve.py` rebuilds `/api/content` from the files
 on every request, so you edit a source file and reload the page:
 
 - drills: `study_bank.py`, `study_extras.py`
-- problems and solution variants: `solve_bank.py`
+- curated problems and solution variants: `solve_bank.py`
+- practice problems (statement + your solution): `practice/*.py`
 - graph layout and edges: `graph.json`
 
 Validate everything without starting the server:

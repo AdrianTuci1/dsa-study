@@ -39,8 +39,7 @@ Or from a clone:
 docker compose up --build
 ```
 
-After the `docker` workflow has run on GitHub, the prebuilt image is also available
-(make the GHCR package public in the repository's package settings for anonymous pulls):
+The workflow publishes a public image to GHCR:
 
 ```bash
 docker run --rm -p 8765:8765 ghcr.io/adriantuci1/dsa-study:latest

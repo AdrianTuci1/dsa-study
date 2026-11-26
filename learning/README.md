@@ -8,7 +8,7 @@ Patru lucruri, fiecare cu un singur scop:
 
 | Ce folosești | Ce faci | Cui se adresează |
 |---|---|---|
-| `study/` (aplicația) | sesiuni mixte (114 exerciții), workspace Solve (14 probleme + variante) și graf de cunoștințe pe canvas, citite din fișiere | exersatul zilnic, vizual |
+| `study/` (aplicația) | sesiuni mixte (114 exerciții), workspace Solve (14 curated + 87 din practice) și graf de cunoștințe pe canvas, citite din fișiere | exersatul zilnic, vizual |
 | `trainer.py` + `cards.py` | flashcard-uri în terminal cu repetiție spațiată (96 carduri) | când vrei rapid, fără browser |
 | `slicing.py` | quiz „prezice output-ul" pentru felii Python (36 exerciții) | sintaxa care produce bug-uri |
 | `PYTHON_SLICING.md` | explicația `a[:1]`, `a[1][:]`, copii superficiale | citit o dată, apoi exersat |
