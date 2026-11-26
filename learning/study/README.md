@@ -172,7 +172,7 @@ Code drill: include exactly one `___` in `code` and list accepted variants in
 `answers`. Trace drill: provide `setup` and `expr`; the builder computes the
 answer.
 
-Then rebuild and reload the page.
+Then reload the page: the server re-reads the file.
 
 ## Progress
 
@@ -183,13 +183,8 @@ live under `dsa-study-notes` and the last opened problem under
 - **Export** downloads a JSON file; **Import** restores it.
 - **Reset** clears the review progress (sheets are kept; clear them with the
   sheet's own Reset button).
-- If the browser blocks storage for `file://` pages, the footer says so and
-  progress lasts only for the tab. For durable progress run a tiny static
-  server instead:
-
-```bash
-python3 -m http.server 8765 --directory learning/study
-# open http://localhost:8765
-```
+- Serve the app through `learning/study/serve.py`: `localStorage` is available
+  on the HTTP origin. A plain `python3 -m http.server` is not enough because the
+  app needs `/api/content`.
 
 The app is English on purpose: the drills are interview-shaped.
