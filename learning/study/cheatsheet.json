@@ -1,0 +1,393 @@
+[
+ {
+  "title": "Slicing (Python)",
+  "tag": "essentials",
+  "note": "a[start:stop:step] builds a new object of the same type with the same elements. a[1][:] is read left to right: a[1] first, then [:] on that value.",
+  "table": [
+   [
+    "a[:1]",
+    "[first]",
+    "a list containing the first element"
+   ],
+   [
+    "a[1]",
+    "second element",
+    "the element at index 1, not a slice"
+   ],
+   [
+    "a[1][:]",
+    "copy of a[1]",
+    "full slice of the element at index 1"
+   ],
+   [
+    "a[:]",
+    "shallow copy",
+    "new outer list, same inner objects"
+   ],
+   [
+    "a[::-1]",
+    "reversed",
+    "step -1"
+   ],
+   [
+    "a[4:1]",
+    "[]",
+    "start after stop with a positive step"
+   ],
+   [
+    "res.append(path[:])",
+    "copy",
+    "without it every result aliases one list"
+   ]
+  ],
+  "group": "Essentials"
+ },
+ {
+  "group": "Essentials",
+  "title": "Python interview idioms",
+  "tag": "collections",
+  "note": "Imports are allowed. Put these at the top of the sheet; they remove most of the boilerplate.",
+  "code": "from collections import deque, Counter, defaultdict\nfrom heapq import heappush, heappop, heapify\nfrom bisect import bisect_left, bisect_right\nfrom functools import lru_cache\n\nqueue = deque([1, 2, 3])\nqueue.append(4)          # push right\nqueue.popleft()          # pop left, O(1)\n\nheap = []                # min-heap\nheappush(heap, 5)\nheappop(heap)\nmax_heap = []            # negate values\nheappush(max_heap, -x)\n\nbisect_left(a, x)        # first index with a[i] >= x\nbisect_right(a, x)       # first index with a[i] > x\n\ncounts = Counter(\"aab\")  # {\"a\": 2, \"b\": 1}\ngroups = defaultdict(list)\ngroups[key].append(value)\n\n@lru_cache(maxsize=None)\ndef solve(state):\n    ...\n\nfloat(\"inf\")             # infinity"
+ },
+ {
+  "group": "Essentials",
+  "title": "Complexity & input sizes",
+  "tag": "O(...)",
+  "note": "Choose the target complexity before coding. If your plan is slower than the budget, change the plan.",
+  "table": [
+   [
+    "n <= 10",
+    "O(n!), O(2^n)",
+    "permutations, brute force"
+   ],
+   [
+    "n <= 20",
+    "O(2^n), O(n * 2^n)",
+    "bitmask DP, subsets"
+   ],
+   [
+    "n <= 500",
+    "O(n^3)",
+    "interval DP, Floyd-Warshall"
+   ],
+   [
+    "n <= 5,000",
+    "O(n^2)",
+    "2-D DP, nested loops"
+   ],
+   [
+    "n <= 10^5",
+    "O(n log n)",
+    "sort, heap, binary search"
+   ],
+   [
+    "n <= 10^6",
+    "O(n)",
+    "two pointers, sliding window"
+   ],
+   [
+    "n up to 10^9",
+    "O(log n), O(1)",
+    "math, binary search on answer"
+   ]
+  ]
+ },
+ {
+  "title": "Two pointers (sorted pair sum)",
+  "tag": "O(n)",
+  "note": "Move the pointer that can still improve the sum. Skip duplicates when you need unique pairs.",
+  "code": "l, r = 0, len(a) - 1\nwhile l < r:\n    total = a[l] + a[r]\n    if total == target:\n        return [l, r]\n    if total < target:\n        l += 1\n    else:\n        r -= 1\nreturn []",
+  "group": "Patterns"
+ },
+ {
+  "title": "Sliding window (variable size)",
+  "tag": "O(n)",
+  "note": "Expand right, shrink left while invalid, update the answer while valid. Each index enters and leaves once.",
+  "code": "left = 0\nstate = {}  # counts, sum, ...\nfor right, x in enumerate(a):\n    add(state, x)\n    while not valid(state):\n        remove(state, a[left])\n        left += 1\n    best = max(best, right - left + 1)\nreturn best",
+  "group": "Patterns"
+ },
+ {
+  "title": "Binary search (lower bound)",
+  "tag": "O(log n)",
+  "note": "Invariant: the answer stays in [lo, hi]. hi starts at n so the answer may be n.",
+  "code": "lo, hi = 0, n\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if ok(mid):\n        hi = mid\n    else:\n        lo = mid + 1\nreturn lo",
+  "group": "Patterns"
+ },
+ {
+  "title": "Monotonic stack (next greater)",
+  "tag": "O(n)",
+  "note": "Each index is pushed and popped at most once. Store indices, not values, when you need distances.",
+  "code": "stack = []\nnext_greater = [0] * len(a)\nfor i, x in enumerate(a):\n    while stack and a[stack[-1]] < x:\n        next_greater[stack.pop()] = x\n    stack.append(i)",
+  "group": "Patterns"
+ },
+ {
+  "title": "BFS on a grid",
+  "tag": "O(rows * cols)",
+  "note": "Mark visited when enqueueing, not when popping, otherwise the queue explodes with duplicates.",
+  "code": "from collections import deque\n\nq = deque([(r0, c0)])\nseen = {(r0, c0)}\nwhile q:\n    r, c = q.popleft()\n    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n        nr, nc = r + dr, c + dc\n        if inside(nr, nc) and (nr, nc) not in seen:\n            seen.add((nr, nc))\n            q.append((nr, nc))",
+  "group": "Patterns"
+ },
+ {
+  "title": "Backtracking",
+  "tag": "choose / explore / unchoose",
+  "note": "Append a copy of the path, never the path itself. Prune as early as possible; with a sorted input you can break.",
+  "code": "def bt(start, path):\n    if is_solution(path):\n        res.append(path[:])\n        return\n    for i in range(start, len(a)):\n        if not valid(a[i]):\n            continue\n        path.append(a[i])\n        bt(i + 1, path)\n        path.pop()",
+  "group": "Patterns"
+ },
+ {
+  "title": "Heap: k largest / running median",
+  "tag": "O(n log k)",
+  "note": "heapq is a min-heap; push -x for a max-heap. Two heaps for the median: max-heap for the small half, min-heap for the large half.",
+  "code": "import heapq\n\n# k largest: keep a min-heap of size k\nfor x in stream:\n    heapq.heappush(h, x)\n    if len(h) > k:\n        heapq.heappop(h)\n# h[0] is the k-th largest\n\n# max-heap\nheapq.heappush(maxh, -x)\nlargest = -maxh[0]",
+  "group": "Patterns"
+ },
+ {
+  "group": "Graphs",
+  "title": "Graph traversal & cycles",
+  "tag": "O(V + E)",
+  "note": "Use a visited set for components; use three colours for directed cycles. For an undirected cycle, track the parent or use Union-Find.",
+  "code": "graph = [[] for _ in range(n)]\nfor u, v in edges:\n    graph[u].append(v)\n    graph[v].append(u)      # undirected only\n\nseen = set()\n\ndef dfs(u):\n    seen.add(u)\n    for v in graph[u]:\n        if v not in seen:\n            dfs(v)\n\ncomponents = 0\nfor u in range(n):\n    if u not in seen:\n        components += 1\n        dfs(u)\n\n# directed cycle: 0 = new, 1 = visiting, 2 = done\nstate = [0] * n\n\ndef has_cycle(u):\n    if state[u] == 1:\n        return True\n    if state[u] == 2:\n        return False\n    state[u] = 1\n    for v in graph[u]:\n        if has_cycle(v):\n            return True\n    state[u] = 2\n    return False"
+ },
+ {
+  "title": "Dijkstra",
+  "tag": "O(E log V)",
+  "note": "Only for non-negative weights. Skip stale heap entries with d > dist[u].",
+  "code": "dist = [inf] * n\ndist[src] = 0\nheap = [(0, src)]\nwhile heap:\n    d, u = heapq.heappop(heap)\n    if d > dist[u]:\n        continue\n    for v, w in graph[u]:\n        if d + w < dist[v]:\n            dist[v] = d + w\n            heapq.heappush(heap, (dist[v], v))",
+  "group": "Graphs"
+ },
+ {
+  "group": "Graphs",
+  "title": "Bellman-Ford with K stops",
+  "tag": "O(K * E)",
+  "note": "One round = one more flight. Relax from a copy of the previous round; relaxing in place allows too many edges.",
+  "code": "def cheapest(n, flights, src, dst, k):\n    INF = float(\"inf\")\n    dist = [INF] * n\n    dist[src] = 0\n    for _ in range(k + 1):\n        nxt = dist[:]\n        for u, v, w in flights:\n            if dist[u] != INF and dist[u] + w < nxt[v]:\n                nxt[v] = dist[u] + w\n        dist = nxt\n    return -1 if dist[dst] == INF else dist[dst]"
+ },
+ {
+  "title": "Topological sort (Kahn)",
+  "tag": "O(V + E)",
+  "note": "Process nodes with indegree 0. If fewer than n nodes come out, there is a cycle.",
+  "code": "indeg = [0] * n\nfor u in range(n):\n    for v in graph[u]:\n        indeg[v] += 1\nq = deque(u for u in range(n) if indeg[u] == 0)\norder = []\nwhile q:\n    u = q.popleft()\n    order.append(u)\n    for v in graph[u]:\n        indeg[v] -= 1\n        if indeg[v] == 0:\n            q.append(v)\nreturn order if len(order) == n else []",
+  "group": "Graphs"
+ },
+ {
+  "title": "Union-Find",
+  "tag": "near O(1) amortised",
+  "note": "Path compression plus union by size. Count components as n - successful unions.",
+  "code": "parent = list(range(n))\nsize = [1] * n\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb:\n        return False\n    if size[ra] < size[rb]:\n        ra, rb = rb, ra\n    parent[rb] = ra\n    size[ra] += size[rb]\n    return True",
+  "group": "Graphs"
+ },
+ {
+  "group": "Graphs",
+  "title": "Minimum spanning tree",
+  "tag": "O(n^2) / O(E log E)",
+  "note": "Prim is easier on dense graphs (no edge list). Kruskal sorts edges and uses Union-Find; it needs O(E) memory.",
+  "code": "def prim(points):\n    n = len(points)\n    used = [False] * n\n    best = [float(\"inf\")] * n\n    best[0] = 0\n    total = 0\n    for _ in range(n):\n        u = -1\n        for i in range(n):\n            if not used[i] and (u == -1 or best[i] < best[u]):\n                u = i\n        used[u] = True\n        total += best[u]\n        for v in range(n):\n            if not used[v]:\n                d = abs(points[u][0] - points[v][0]) + abs(points[u][1] - points[v][1])\n                best[v] = min(best[v], d)\n    return total"
+ },
+ {
+  "title": "DP 1-D rolling",
+  "tag": "O(n) time, O(1) space",
+  "note": "Write the recurrence, then keep only the states it reads.",
+  "code": "# House Robber\ntwo_back = one_back = 0\nfor x in nums:\n    two_back, one_back = one_back, max(one_back, two_back + x)\nreturn one_back",
+  "group": "DP"
+ },
+ {
+  "title": "DP 2-D (LCS / edit distance)",
+  "tag": "O(mn)",
+  "note": "Two rows are enough. Row 0 is the empty prefix of one string.",
+  "code": "prev = [0] * (n + 1)\nfor i, ca in enumerate(a, 1):\n    cur = [0] * (n + 1)\n    for j, cb in enumerate(b, 1):\n        if ca == cb:\n            cur[j] = prev[j - 1] + 1\n        else:\n            cur[j] = max(prev[j], cur[j - 1])\n    prev = cur\nreturn prev[n]",
+  "group": "DP"
+ },
+ {
+  "title": "0/1 Knapsack (1-D)",
+  "tag": "O(nW)",
+  "note": "Capacity loop must go DOWN, so dp[c - w] still belongs to the previous item.",
+  "code": "dp = [0] * (capacity + 1)\nfor w, v in zip(weights, values):\n    if w > capacity:\n        continue\n    for c in range(capacity, w - 1, -1):\n        dp[c] = max(dp[c], dp[c - w] + v)\nreturn dp[capacity]",
+  "group": "DP"
+ },
+ {
+  "title": "LIS (patience sorting)",
+  "tag": "O(n log n)",
+  "note": "tails[k] is the smallest tail of an increasing subsequence of length k + 1. tails is not the subsequence itself.",
+  "code": "from bisect import bisect_left\n\ntails = []\nfor x in nums:\n    i = bisect_left(tails, x)\n    if i == len(tails):\n        tails.append(x)\n    else:\n        tails[i] = x\nreturn len(tails)",
+  "group": "DP"
+ },
+ {
+  "group": "DP",
+  "title": "DP patterns: coins, intervals, bitmask",
+  "tag": "state + transition",
+  "note": "Name the state before coding. Coin change is unbounded; intervals iterate by length; bitmask DP needs n <= 20.",
+  "code": "# coin change: minimum coins, unlimited use\ndp = [float(\"inf\")] * (amount + 1)\ndp[0] = 0\nfor value in range(1, amount + 1):\n    for coin in coins:\n        if coin <= value:\n            dp[value] = min(dp[value], dp[value - coin] + 1)\n\n# interval DP: increasing length, then split point\nfor length in range(2, n + 1):\n    for i in range(n - length + 1):\n        j = i + length - 1\n        for k in range(i, j):\n            dp[i][j] = min(dp[i][j], dp[i][k] + dp[k + 1][j] + cost)\n\n# bitmask DP: n <= 20\nfor mask in range(1 << n):\n    for i in range(n):\n        if mask & (1 << i):\n            ..."
+ },
+ {
+  "group": "Structures",
+  "title": "Linked list",
+  "tag": "O(n)",
+  "note": "A dummy node removes the empty-list special case. Middle uses fast/slow; reverse uses prev/cur/nxt.",
+  "code": "class ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef reverse(head):\n    prev, cur = None, head\n    while cur:\n        nxt = cur.next\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef middle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n    return slow\n\ndef merge(a, b):\n    dummy = tail = ListNode()\n    while a and b:\n        if a.val <= b.val:\n            tail.next, a = a, a.next\n        else:\n            tail.next, b = b, b.next\n        tail = tail.next\n    tail.next = a or b\n    return dummy.next"
+ },
+ {
+  "group": "Structures",
+  "title": "Tree traversals & BST",
+  "tag": "O(n)",
+  "note": "Inorder of a BST is sorted. Level order captures len(q) before the inner loop. BST validation passes (low, high) bounds.",
+  "code": "def inorder(root):\n    out, stack, node = [], [], root\n    while stack or node:\n        while node:\n            stack.append(node)\n            node = node.left\n        node = stack.pop()\n        out.append(node.val)\n        node = node.right\n    return out\n\ndef level_order(root):\n    if not root:\n        return []\n    out, q = [], deque([root])\n    while q:\n        level = []\n        for _ in range(len(q)):\n            node = q.popleft()\n            level.append(node.val)\n            if node.left:\n                q.append(node.left)\n            if node.right:\n                q.append(node.right)\n        out.append(level)\n    return out\n\ndef valid_bst(root, low=float(\"-inf\"), high=float(\"inf\")):\n    if not root:\n        return True\n    if not low < root.val < high:\n        return False\n    return (valid_bst(root.left, low, root.val)\n            and valid_bst(root.right, root.val, high))"
+ },
+ {
+  "title": "Trie",
+  "tag": "O(len(word))",
+  "note": "Children dict plus an end flag. A prefix existing is not the same as a word existing.",
+  "code": "root = {}\nEND = \"#\"\n\ndef insert(word):\n    node = root\n    for ch in word:\n        node = node.setdefault(ch, {})\n    node[END] = True\n\ndef walk(word):\n    node = root\n    for ch in word:\n        node = node.get(ch)\n        if node is None:\n            return None\n    return node",
+  "group": "Structures"
+ },
+ {
+  "group": "Structures",
+  "title": "Design",
+  "tag": "O(1) per op",
+  "note": "LRU: hash map + doubly linked list (or OrderedDict). Min Stack: parallel mins. Queue from two stacks: pour only when the outbox is empty.",
+  "code": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.cache = OrderedDict()\n\n    def get(self, key):\n        if key not in self.cache:\n            return -1\n        self.cache.move_to_end(key)\n        return self.cache[key]\n\n    def put(self, key, value):\n        if key in self.cache:\n            self.cache.move_to_end(key)\n        self.cache[key] = value\n        if len(self.cache) > self.capacity:\n            self.cache.popitem(last=False)"
+ },
+ {
+  "group": "Matrix & bits",
+  "title": "Matrix: spiral, rotate, zeroes",
+  "tag": "O(mn)",
+  "note": "Spiral uses four walls. Rotate is transpose + reverse rows; matrix[:] keeps the same object. Zeroes uses the first row/column as markers.",
+  "code": "def spiral(m):\n    out = []\n    top, bottom = 0, len(m) - 1\n    left, right = 0, len(m[0]) - 1\n    while top <= bottom and left <= right:\n        out += m[top][left:right + 1]\n        top += 1\n        out += [m[r][right] for r in range(top, bottom + 1)]\n        right -= 1\n        if top <= bottom:\n            out += m[bottom][left:right + 1][::-1]\n            bottom -= 1\n        if left <= right:\n            out += [m[r][left] for r in range(bottom, top - 1, -1)]\n            left += 1\n    return out\n\ndef rotate(m):\n    m[:] = [list(row) for row in zip(*m[::-1])]\n\ndef set_zeroes(m):\n    rows, cols = len(m), len(m[0])\n    first_row = any(m[0][c] == 0 for c in range(cols))\n    first_col = any(m[r][0] == 0 for r in range(rows))\n    for r in range(1, rows):\n        for c in range(1, cols):\n            if m[r][c] == 0:\n                m[r][0] = m[0][c] = 0\n    for r in range(1, rows):\n        for c in range(1, cols):\n            if m[r][0] == 0 or m[0][c] == 0:\n                m[r][c] = 0\n    if first_row:\n        for c in range(cols):\n            m[0][c] = 0\n    if first_col:\n        for r in range(rows):\n            m[r][0] = 0"
+ },
+ {
+  "group": "Matrix & bits",
+  "title": "Bit manipulation",
+  "tag": "O(1) per op",
+  "note": "XOR cancels pairs. n & (n - 1) clears the lowest set bit; use it for bit counting and powers of two.",
+  "code": "x ^ x                 # 0\nx ^ 0                 # x\nx & (x - 1)           # clear the lowest set bit\nx & -x                # isolate the lowest set bit\nx | (1 << k)          # set bit k\nx & ~(1 << k)         # clear bit k\n(x >> k) & 1          # test bit k\n\n# every subset of mask\nsub = mask\nwhile sub:\n    ...\n    sub = (sub - 1) & mask"
+ },
+ {
+  "group": "Matrix & bits",
+  "title": "Math: gcd, sieve, fast power",
+  "tag": "O(log n) / O(n log log n)",
+  "note": "Use math.gcd; write the sieve once. Binary exponentiation handles negative exponents by inverting the base.",
+  "code": "from math import gcd\n\ndef lcm(a, b):\n    return a // gcd(a, b) * b\n\ndef sieve(n):\n    is_prime = bytearray(b\"\\x01\") * n\n    if n > 0:\n        is_prime[0] = 0\n    if n > 1:\n        is_prime[1] = 0\n    p = 2\n    while p * p < n:\n        if is_prime[p]:\n            is_prime[p * p:n:p] = bytearray(len(range(p * p, n, p)))\n        p += 1\n    return sum(is_prime)\n\ndef power(base, exp):\n    result = 1\n    while exp:\n        if exp & 1:\n            result *= base\n        base *= base\n        exp >>= 1\n    return result"
+ },
+ {
+  "group": "Strings",
+  "title": "Strings: KMP, rolling hash",
+  "tag": "O(n + m)",
+  "note": "The prefix table says how far to jump on a mismatch. Rolling hash gives O(1) window updates for multiple patterns.",
+  "code": "def prefix_table(pattern):\n    table = [0] * len(pattern)\n    k = 0\n    for i in range(1, len(pattern)):\n        while k and pattern[i] != pattern[k]:\n            k = table[k - 1]\n        if pattern[i] == pattern[k]:\n            k += 1\n        table[i] = k\n    return table\n\ndef kmp(text, pattern):\n    table = prefix_table(pattern)\n    k = 0\n    for i, ch in enumerate(text):\n        while k and ch != pattern[k]:\n            k = table[k - 1]\n        if ch == pattern[k]:\n            k += 1\n        if k == len(pattern):\n            return i - k + 1\n    return -1"
+ },
+ {
+  "group": "Meta",
+  "title": "Interview checklist",
+  "tag": "45 min",
+  "note": "Say the plan out loud. Silent coding is the most common failure; the interviewer scores the reasoning, not only the code.",
+  "table": [
+   [
+    "Clarify",
+    "size, duplicates, negatives, empty, return type",
+    "removes surprises"
+   ],
+   [
+    "Examples",
+    "one normal + one edge, dry-run",
+    "proves the pattern"
+   ],
+   [
+    "Brute force",
+    "state time/space, then optimize",
+    "shows the baseline"
+   ],
+   [
+    "Code",
+    "small functions, clear names",
+    "fewer bugs"
+   ],
+   [
+    "Test",
+    "empty, single, duplicates, sorted/rotated",
+    "catches edge cases"
+   ],
+   [
+    "Complexity",
+    "time + space, best/worst",
+    "always expected"
+   ]
+  ]
+ },
+ {
+  "group": "Meta",
+  "title": "Pattern triggers",
+  "tag": "recognition",
+  "note": "Read the constraints first, then the shape of the input. The pattern usually announces itself in the first two sentences.",
+  "table": [
+   [
+    "sorted array / pair sum",
+    "two pointers, binary search",
+    "monotone order"
+   ],
+   [
+    "contiguous subarray",
+    "sliding window, prefix sum",
+    "window invariant"
+   ],
+   [
+    "top k / kth",
+    "heap, quickselect",
+    "partial order"
+   ],
+   [
+    "all combinations",
+    "backtracking",
+    "search tree"
+   ],
+   [
+    "shortest path, unweighted",
+    "BFS",
+    "distance layers"
+   ],
+   [
+    "shortest path, weighted",
+    "Dijkstra / Bellman-Ford",
+    "non-negative / K stops"
+   ],
+   [
+    "dependencies",
+    "topological sort",
+    "DAG"
+   ],
+   [
+    "connectivity",
+    "DFS/BFS/Union-Find",
+    "components"
+   ],
+   [
+    "overlapping intervals",
+    "sort + merge, sweep",
+    "endpoints"
+   ],
+   [
+    "optimal substructure",
+    "DP",
+    "states + transition"
+   ],
+   [
+    "safe local choice",
+    "greedy",
+    "exchange argument"
+   ],
+   [
+    "level by level",
+    "BFS queue",
+    "tree/graph levels"
+   ],
+   [
+    "shared prefixes",
+    "trie",
+    "prefix tree"
+   ],
+   [
+    "pairs cancel",
+    "XOR",
+    "x ^ x = 0"
+   ]
+  ]
+ }
+]

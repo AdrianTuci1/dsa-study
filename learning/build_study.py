@@ -31,6 +31,7 @@ def main():
     print("Drills: %d %s" % (meta["items"], meta["counts"]))
     print("Problems: %d (%d variants)" % (meta["problems"], meta["variants"]))
     print("Practice: %d problems (%d stubs)" % (meta["practice"], meta["practice_stubs"]))
+    print("Cheatsheet: %d sections" % meta["cheatsheet"])
     print("Graph: %d nodes, %d edges" % (meta["nodes"], meta["edges"]))
     for warning in meta.get("warnings") or []:
         print("warning:", warning)

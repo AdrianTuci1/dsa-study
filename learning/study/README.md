@@ -41,12 +41,30 @@ The **Solve** tab is a two-pane page for working through full problems:
 - **Sources:** the `Curated` tab uses `solve_bank.py` (multiple variants);
   the `practice/` tab reads the problem statements, examples, constraints and
   your own function from `practice/*.py` at request time.
-- **Right:** your sheet. A plain monospace editor with line numbers, autosaved
-  per problem in `localStorage`. `Mark solved` tracks completion.
+- **Right:** your sheet. A monospace editor with live syntax highlighting,
+  line numbers and autosave per problem in `localStorage`. `Mark solved`
+  tracks completion.
+- **Run tests:** for `practice/` problems, the sheet is executed against the
+  tests in that practice file (subprocess, CPU and time limit) and the panel
+  shows `passed / total` plus expected vs. got. The practice file's top-level
+  imports (`heapq`, `deque`, ...) are available to the sheet, so you only write
+  the function.
 
 The two panes scroll independently on desktop and stack on narrow screens. The
 sheet keeps its own text per problem; switching problems or reloading does not
 lose it.
+
+`Run tests` executes code locally. The server binds `127.0.0.1` by default;
+never expose it (or the Docker port) publicly.
+
+## Cheatsheet
+
+The **Cheatsheet** tab holds 31 sections in 8 groups: essentials, patterns,
+graphs, DP, structures, matrix & bits, strings, and meta. Each section is a
+short template with a note. The search box filters by title, tag, note, code or
+table.
+
+The content lives in `learning/study/cheatsheet.json`; edit it and reload.
 
 ## Knowledge graph
 
@@ -106,8 +124,10 @@ learning/
 ├── solve_bank.py        14 problems with solution variants
 ├── build_study.py       validation CLI (writes nothing)
 └── study/
-    ├── serve.py         static files + /api/content
+    ├── serve.py         static files + /api/content + /api/run
+    ├── run_practice.py  executes a sheet against practice tests
     ├── graph.json       knowledge graph layout (nodes and edges)
+    ├── cheatsheet.json  31 sections, grouped
     ├── index.html       the app shell
     ├── style.css        minimal UI
     ├── core.js          scheduling, selection, stats (no DOM)
@@ -121,6 +141,7 @@ on every request, so you edit a source file and reload the page:
 - drills: `study_bank.py`, `study_extras.py`
 - curated problems and solution variants: `solve_bank.py`
 - practice problems (statement + your solution): `practice/*.py`
+- cheat sheet: `cheatsheet.json`
 - graph layout and edges: `graph.json`
 
 Validate everything without starting the server:
@@ -131,7 +152,9 @@ python3 learning/build_study.py
 
 The validator checks ids, concepts, option counts, that every code drill has
 exactly one `___`, that every problem variant parses as Python (via `ast`),
-and it executes every trace `setup`/`expr` to compute the answer key. A trace
+that every cheat sheet section has a group/title/note and a code block or a
+3-column table, and it executes every trace `setup`/`expr` to compute the
+answer key. A trace
 answer can never drift from the code it shows. The same validation runs
 inside the server: if a source file is broken, the app shows the exact list of
 problems instead of a blank page.

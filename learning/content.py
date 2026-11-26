@@ -22,6 +22,7 @@ from practice_parser import parse_practice_dir
 HERE = os.path.dirname(os.path.abspath(__file__))
 STUDY_DIR = os.path.join(HERE, "study")
 GRAPH_PATH = os.path.join(STUDY_DIR, "graph.json")
+CHEATSHEET_PATH = os.path.join(STUDY_DIR, "cheatsheet.json")
 
 
 class ContentError(Exception):
@@ -239,6 +240,47 @@ def validate_practice(problems, concepts):
     return issues
 
 
+def load_cheatsheet():
+    try:
+        with open(CHEATSHEET_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except FileNotFoundError:
+        raise ContentError(["missing %s" % CHEATSHEET_PATH])
+    except ValueError as exc:
+        raise ContentError(["cheatsheet.json is not valid JSON: %s" % exc])
+    if not isinstance(data, list) or not data:
+        raise ContentError(["cheatsheet.json must contain a non-empty list of sections"])
+    return data
+
+
+def validate_cheatsheet(sections):
+    issues = []
+    titles = set()
+    for index, section in enumerate(sections):
+        if not isinstance(section, dict):
+            issues.append("cheatsheet section %d is not an object" % index)
+            continue
+        for field in ("group", "title", "tag", "note"):
+            if not section.get(field):
+                issues.append("cheatsheet section %d: missing %s" % (index, field))
+        title = section.get("title")
+        if title in titles:
+            issues.append("duplicate cheatsheet title: %s" % title)
+        titles.add(title)
+        code = section.get("code")
+        table = section.get("table")
+        if not code and not table:
+            issues.append("%s: needs code or table" % title)
+        if code is not None and not isinstance(code, str):
+            issues.append("%s: code must be a string" % title)
+        if table is not None:
+            if not isinstance(table, list) or any(
+                not isinstance(row, (list, tuple)) or len(row) != 3 for row in table
+            ):
+                issues.append("%s: table rows must have 3 columns" % title)
+    return issues
+
+
 def build_content():
     """Read every source file and return the JSON payload for the app."""
     bugs = []
@@ -268,6 +310,7 @@ def build_content():
 
     problems = [dict(item) for item in solve.PROBLEMS]
     graph = load_graph()
+    cheatsheet = load_cheatsheet()
     practice_dir = os.path.join(os.path.dirname(HERE), "practice")
     practice, practice_warnings = parse_practice_dir(practice_dir, concepts)
 
@@ -276,6 +319,7 @@ def build_content():
     issues += validate_problems(problems, concepts)
     issues += validate_practice(practice, concepts)
     issues += validate_graph(graph, concepts)
+    issues += validate_cheatsheet(cheatsheet)
     if issues:
         raise ContentError(issues)
 
@@ -289,6 +333,7 @@ def build_content():
         "problems": problems,
         "practice": practice,
         "graph": graph,
+        "cheatsheet": cheatsheet,
         "meta": {
             "items": len(items),
             "counts": counts,
@@ -296,6 +341,7 @@ def build_content():
             "variants": sum(len(problem["variants"]) for problem in problems),
             "practice": len(practice),
             "practice_stubs": sum(1 for problem in practice if not problem["implemented"]),
+            "cheatsheet": len(cheatsheet),
             "nodes": len(graph["nodes"]),
             "edges": len(graph["edges"]),
             "warnings": practice_warnings,

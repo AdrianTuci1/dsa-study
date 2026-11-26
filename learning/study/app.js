@@ -12,6 +12,7 @@
   let PRACTICE = [];
   let GRAPH = { nodes: [], edges: [] };
   let CONCEPTS = [];
+  let CHEATS = [];
   const STORAGE_KEY = "dsa-study-v1";
   const THEME_KEY = "dsa-study-theme";
   const NOTES_KEY = "dsa-study-notes";
@@ -61,9 +62,19 @@
     "async", "await",
   ]);
 
-  // Tiny Python tokenizer: comments, strings, identifiers, numbers.
+  const PY_BUILTINS = new Set([
+    "len", "range", "min", "max", "sum", "sorted", "enumerate", "zip", "map",
+    "filter", "reversed", "set", "dict", "list", "tuple", "int", "str",
+    "float", "bool", "abs", "any", "all", "isinstance", "type", "print",
+    "round", "divmod", "open", "input", "deque", "heapq", "heappush",
+    "heappop", "heapify", "bisect_left", "bisect_right", "Counter",
+    "defaultdict", "OrderedDict", "lru_cache", "product", "accumulate",
+  ]);
+
+  // Small Python tokenizer: comments, strings, decorators, def/class names,
+  // keywords, builtins, numbers and operators. No dependency, no DOM.
   function highlightPython(code) {
-    const pattern = /(#[^\n]*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|\b([A-Za-z_]\w*)\b|\b(\d+(?:\.\d+)?)\b/g;
+    const pattern = /(#[^\n]*)|("""[\s\S]*?"""|'''[\s\S]*?'''|(?:[rRbBuUfF]{0,2})?(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'))|(@[A-Za-z_]\w*)|\b(def|class)\s+([A-Za-z_]\w*)|\b([A-Za-z_]\w*)\b|\b(\d[\d_]*(?:\.\d+)?)\b|([+\-*/%=<>!&|^~]+)/g;
     let out = "";
     let last = 0;
     let match;
@@ -74,11 +85,22 @@
       } else if (match[2]) {
         out += '<span class="tok-string">' + esc(match[2]) + "</span>";
       } else if (match[3]) {
-        out += PY_KEYWORDS.has(match[3])
-          ? '<span class="tok-keyword">' + esc(match[3]) + "</span>"
-          : esc(match[3]);
+        out += '<span class="tok-decorator">' + esc(match[3]) + "</span>";
+      } else if (match[4]) {
+        out += '<span class="tok-keyword">' + esc(match[4]) + "</span> " +
+          '<span class="tok-function">' + esc(match[5]) + "</span>";
+      } else if (match[6]) {
+        if (PY_KEYWORDS.has(match[6])) {
+          out += '<span class="tok-keyword">' + esc(match[6]) + "</span>";
+        } else if (PY_BUILTINS.has(match[6])) {
+          out += '<span class="tok-builtin">' + esc(match[6]) + "</span>";
+        } else {
+          out += esc(match[6]);
+        }
+      } else if (match[7]) {
+        out += '<span class="tok-number">' + esc(match[7]) + "</span>";
       } else {
-        out += '<span class="tok-number">' + esc(match[4]) + "</span>";
+        out += '<span class="tok-operator">' + esc(match[8]) + "</span>";
       }
       last = pattern.lastIndex;
     }
@@ -689,6 +711,15 @@
     gutter.scrollTop = sheet.scrollTop;
   }
 
+  function updateSheetHighlight() {
+    const sheet = document.getElementById("sheet");
+    const pre = document.getElementById("sheetHighlight");
+    if (!sheet || !pre) return;
+    pre.innerHTML = highlightPython(sheet.value) + "\n";
+    pre.scrollTop = sheet.scrollTop;
+    pre.scrollLeft = sheet.scrollLeft;
+  }
+
   function recordSheetValue(value) {
     const problem = currentProblem();
     if (!problem) return;
@@ -696,6 +727,7 @@
     setSheetStatus("saving...");
     schedulePersistNotes();
     updateGutter();
+    updateSheetHighlight();
   }
 
   function goToProblem(index) {
@@ -770,7 +802,83 @@
       sheet.focus({ preventScroll: true });
     }
     updateGutter();
+    updateSheetHighlight();
     setSheetStatus("cleared");
+  }
+
+  function setRunButton(label, disabled) {
+    const button = document.querySelector('[data-action="run-sheet"]');
+    if (!button) return;
+    button.textContent = label;
+    if (disabled) button.setAttribute("disabled", "disabled");
+    else button.removeAttribute("disabled");
+  }
+
+  function showRunResults(data) {
+    const panel = document.getElementById("runPanel");
+    if (!panel) return;
+    panel.hidden = false;
+    if (data.error) {
+      panel.innerHTML = '<div class="run-summary run-summary--bad">' + esc(data.error) + "</div>";
+      return;
+    }
+    const results = data.results || [];
+    const total = data.total || results.length;
+    const passed = data.passed || 0;
+    let html = '<div class="run-summary">' + passed + " / " + total + " passed</div>";
+    results.forEach(function (result) {
+      const detail = result.error
+        ? '<span class="run-detail">' + esc(result.error) + "</span>"
+        : result.passed
+          ? ""
+          : '<span class="run-detail">expected ' + esc(result.expected) + " \u00b7 got " + esc(result.got) + "</span>";
+      html += '<div class="run-result ' + (result.passed ? "is-pass" : "is-fail") + '">' +
+        '<span class="run-result__mark">' + (result.passed ? "[v]" : "[x]") + "</span> " +
+        esc(result.label) + detail + "</div>";
+    });
+    panel.innerHTML = html;
+  }
+
+  function runSheet() {
+    const problem = currentProblem();
+    if (!problem || !problem.runnable) return;
+    const problemId = problem.id;
+    persistNotes();
+    const sheet = document.getElementById("sheet");
+    const code = sheet ? sheet.value : "";
+    const panel = document.getElementById("runPanel");
+    if (panel) {
+      panel.hidden = false;
+      panel.innerHTML = '<div class="run-summary">Running...</div>';
+    }
+    setRunButton("Running...", true);
+    fetch("/api/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ problem_id: problemId, code: code }),
+    })
+      .then(function (response) {
+        return response.json().then(function (body) {
+          if (!response.ok) throw new Error(body.error || "HTTP " + response.status);
+          return body;
+        });
+      })
+      .then(function (data) {
+        const current = currentProblem();
+        if (!current || current.id !== problemId) return;
+        showRunResults(data);
+        setRunButton("Run tests", false);
+      })
+      .catch(function (error) {
+        const current = currentProblem();
+        if (!current || current.id !== problemId) return;
+        const target = document.getElementById("runPanel");
+        if (target) {
+          target.hidden = false;
+          target.innerHTML = '<div class="run-summary run-summary--bad">' + esc(error.message) + "</div>";
+        }
+        setRunButton("Run tests", false);
+      });
   }
 
   function handleSheetKey(event) {
@@ -879,9 +987,13 @@
 
     const prevDisabled = index === 0 ? " disabled" : "";
     const nextDisabled = index === list.length - 1 ? " disabled" : "";
+    const functionHint = problem.function
+      ? " · tests call <code>" + esc(problem.function) + "</code>"
+      : "";
     const sourceLine = problem.source
       ? '<p class="meta">' + esc(problem.source) +
-        (problem.leetcode ? " · LeetCode " + esc(problem.leetcode) : "") + "</p>"
+        (problem.leetcode ? " · LeetCode " + esc(problem.leetcode) : "") +
+        functionHint + "</p>"
       : "";
     const leetcodeBadge = problem.leetcode
       ? '<span class="badge">LC ' + esc(problem.leetcode) + "</span>"
@@ -931,16 +1043,23 @@
       '<span class="label">Your sheet</span>' +
       '<span class="meta" id="sheetStatus">saved</span>' +
       '<div class="sheet-actions">' +
+      (problem.runnable
+        ? '<button class="btn btn--text" data-action="run-sheet">Run tests</button>'
+        : "") +
       '<button class="btn btn--text" data-action="sheet-copy">Copy</button>' +
       '<button class="btn btn--text" data-action="sheet-reset">Reset</button>' +
       "</div></div>" +
       '<div class="sheet-body">' +
       '<pre class="sheet-gutter" id="gutter" aria-hidden="true">1</pre>' +
+      '<div class="sheet-code">' +
+      '<pre class="sheet-highlight" id="sheetHighlight" aria-hidden="true"></pre>' +
       '<textarea id="sheet" class="sheet-input" spellcheck="false" autocomplete="off"' +
       ' aria-label="Your solution sheet" placeholder="# write your solution here">' +
       esc(note) +
       "</textarea>" +
-      "</div></section></div>"
+      "</div></div>" +
+      '<div class="run-panel" id="runPanel" hidden></div>' +
+      "</section></div>"
     );
   }
 
@@ -956,11 +1075,17 @@
 
   function afterSolveRender() {
     updateGutter();
+    updateSheetHighlight();
     const sheet = document.getElementById("sheet");
     if (!sheet) return;
     sheet.addEventListener("scroll", function () {
       const gutter = document.getElementById("gutter");
       if (gutter) gutter.scrollTop = sheet.scrollTop;
+      const pre = document.getElementById("sheetHighlight");
+      if (pre) {
+        pre.scrollTop = sheet.scrollTop;
+        pre.scrollLeft = sheet.scrollLeft;
+      }
     });
   }
 
@@ -1198,131 +1323,88 @@
   }
 
   // ---------------------------------------------------------------- cheatsheet
-  const CHEATS = [
-    {
-      title: "Slicing (Python)",
-      tag: "essentials",
-      note: "a[start:stop:step] builds a new object of the same type with the same elements. a[1][:] is read left to right: a[1] first, then [:] on that value.",
-      table: [
-        ["a[:1]", "[first]", "a list containing the first element"],
-        ["a[1]", "second element", "the element at index 1, not a slice"],
-        ["a[1][:]", "copy of a[1]", "full slice of the element at index 1"],
-        ["a[:]", "shallow copy", "new outer list, same inner objects"],
-        ["a[::-1]", "reversed", "step -1"],
-        ["a[4:1]", "[]", "start after stop with a positive step"],
-        ["res.append(path[:])", "copy", "without it every result aliases one list"],
-      ],
-    },
-    {
-      title: "Two pointers (sorted pair sum)",
-      tag: "O(n)",
-      note: "Move the pointer that can still improve the sum. Skip duplicates when you need unique pairs.",
-      code: ["l, r = 0, len(a) - 1", "while l < r:", "    total = a[l] + a[r]", "    if total == target:", "        return [l, r]", "    if total < target:", "        l += 1", "    else:", "        r -= 1", "return []"].join("\n"),
-    },
-    {
-      title: "Sliding window (variable size)",
-      tag: "O(n)",
-      note: "Expand right, shrink left while invalid, update the answer while valid. Each index enters and leaves once.",
-      code: ["left = 0", "state = {}  # counts, sum, ...", "for right, x in enumerate(a):", "    add(state, x)", "    while not valid(state):", "        remove(state, a[left])", "        left += 1", "    best = max(best, right - left + 1)", "return best"].join("\n"),
-    },
-    {
-      title: "Binary search (lower bound)",
-      tag: "O(log n)",
-      note: "Invariant: the answer stays in [lo, hi]. hi starts at n so the answer may be n.",
-      code: ["lo, hi = 0, n", "while lo < hi:", "    mid = (lo + hi) // 2", "    if ok(mid):", "        hi = mid", "    else:", "        lo = mid + 1", "return lo"].join("\n"),
-    },
-    {
-      title: "BFS on a grid",
-      tag: "O(rows * cols)",
-      note: "Mark visited when enqueueing, not when popping, otherwise the queue explodes with duplicates.",
-      code: ["from collections import deque", "", "q = deque([(r0, c0)])", "seen = {(r0, c0)}", "while q:", "    r, c = q.popleft()", "    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):", "        nr, nc = r + dr, c + dc", "        if inside(nr, nc) and (nr, nc) not in seen:", "            seen.add((nr, nc))", "            q.append((nr, nc))"].join("\n"),
-    },
-    {
-      title: "Backtracking",
-      tag: "choose / explore / unchoose",
-      note: "Append a copy of the path, never the path itself. Prune as early as possible; with a sorted input you can break.",
-      code: ["def bt(start, path):", "    if is_solution(path):", "        res.append(path[:])", "        return", "    for i in range(start, len(a)):", "        if not valid(a[i]):", "            continue", "        path.append(a[i])", "        bt(i + 1, path)", "        path.pop()"].join("\n"),
-    },
-    {
-      title: "Heap: k largest / running median",
-      tag: "O(n log k)",
-      note: "heapq is a min-heap; push -x for a max-heap. Two heaps for the median: max-heap for the small half, min-heap for the large half.",
-      code: ["import heapq", "", "# k largest: keep a min-heap of size k", "for x in stream:", "    heapq.heappush(h, x)", "    if len(h) > k:", "        heapq.heappop(h)", "# h[0] is the k-th largest", "", "# max-heap", "heapq.heappush(maxh, -x)", "largest = -maxh[0]"].join("\n"),
-    },
-    {
-      title: "Dijkstra",
-      tag: "O(E log V)",
-      note: "Only for non-negative weights. Skip stale heap entries with d > dist[u].",
-      code: ["dist = [inf] * n", "dist[src] = 0", "heap = [(0, src)]", "while heap:", "    d, u = heapq.heappop(heap)", "    if d > dist[u]:", "        continue", "    for v, w in graph[u]:", "        if d + w < dist[v]:", "            dist[v] = d + w", "            heapq.heappush(heap, (dist[v], v))"].join("\n"),
-    },
-    {
-      title: "Topological sort (Kahn)",
-      tag: "O(V + E)",
-      note: "Process nodes with indegree 0. If fewer than n nodes come out, there is a cycle.",
-      code: ["indeg = [0] * n", "for u in range(n):", "    for v in graph[u]:", "        indeg[v] += 1", "q = deque(u for u in range(n) if indeg[u] == 0)", "order = []", "while q:", "    u = q.popleft()", "    order.append(u)", "    for v in graph[u]:", "        indeg[v] -= 1", "        if indeg[v] == 0:", "            q.append(v)", "return order if len(order) == n else []"].join("\n"),
-    },
-    {
-      title: "Union-Find",
-      tag: "near O(1) amortised",
-      note: "Path compression plus union by size. Count components as n - successful unions.",
-      code: ["parent = list(range(n))", "size = [1] * n", "", "def find(x):", "    while parent[x] != x:", "        parent[x] = parent[parent[x]]", "        x = parent[x]", "    return x", "", "def union(a, b):", "    ra, rb = find(a), find(b)", "    if ra == rb:", "        return False", "    if size[ra] < size[rb]:", "        ra, rb = rb, ra", "    parent[rb] = ra", "    size[ra] += size[rb]", "    return True"].join("\n"),
-    },
-    {
-      title: "Trie",
-      tag: "O(len(word))",
-      note: "Children dict plus an end flag. A prefix existing is not the same as a word existing.",
-      code: ["root = {}", "END = \"#\"", "", "def insert(word):", "    node = root", "    for ch in word:", "        node = node.setdefault(ch, {})", "    node[END] = True", "", "def walk(word):", "    node = root", "    for ch in word:", "        node = node.get(ch)", "        if node is None:", "            return None", "    return node"].join("\n"),
-    },
-    {
-      title: "DP 1-D rolling",
-      tag: "O(n) time, O(1) space",
-      note: "Write the recurrence, then keep only the states it reads.",
-      code: ["# House Robber", "two_back = one_back = 0", "for x in nums:", "    two_back, one_back = one_back, max(one_back, two_back + x)", "return one_back"].join("\n"),
-    },
-    {
-      title: "DP 2-D (LCS / edit distance)",
-      tag: "O(mn)",
-      note: "Two rows are enough. Row 0 is the empty prefix of one string.",
-      code: ["prev = [0] * (n + 1)", "for i, ca in enumerate(a, 1):", "    cur = [0] * (n + 1)", "    for j, cb in enumerate(b, 1):", "        if ca == cb:", "            cur[j] = prev[j - 1] + 1", "        else:", "            cur[j] = max(prev[j], cur[j - 1])", "    prev = cur", "return prev[n]"].join("\n"),
-    },
-    {
-      title: "0/1 Knapsack (1-D)",
-      tag: "O(nW)",
-      note: "Capacity loop must go DOWN, so dp[c - w] still belongs to the previous item.",
-      code: ["dp = [0] * (capacity + 1)", "for w, v in zip(weights, values):", "    if w > capacity:", "        continue", "    for c in range(capacity, w - 1, -1):", "        dp[c] = max(dp[c], dp[c - w] + v)", "return dp[capacity]"].join("\n"),
-    },
-    {
-      title: "LIS (patience sorting)",
-      tag: "O(n log n)",
-      note: "tails[k] is the smallest tail of an increasing subsequence of length k + 1. tails is not the subsequence itself.",
-      code: ["from bisect import bisect_left", "", "tails = []", "for x in nums:", "    i = bisect_left(tails, x)", "    if i == len(tails):", "        tails.append(x)", "    else:", "        tails[i] = x", "return len(tails)"].join("\n"),
-    },
-    {
-      title: "Monotonic stack (next greater)",
-      tag: "O(n)",
-      note: "Each index is pushed and popped at most once. Store indices, not values, when you need distances.",
-      code: ["stack = []", "next_greater = [0] * len(a)", "for i, x in enumerate(a):", "    while stack and a[stack[-1]] < x:", "        next_greater[stack.pop()] = x", "    stack.append(i)"].join("\n"),
-    },
-  ];
+
+
+  const GROUP_ORDER = ["Essentials", "Patterns", "Graphs", "DP", "Structures", "Matrix & bits", "Strings", "Meta"];
+  let cheatQuery = "";
+
+  function cheatText(section) {
+    const parts = [section.group, section.title, section.tag, section.note || ""];
+    if (section.code) parts.push(section.code);
+    if (section.table) {
+      section.table.forEach(function (row) { parts.push(row.join(" ")); });
+    }
+    return parts.join("\n").toLowerCase();
+  }
 
   function cheatsheetHtml() {
-    const details = CHEATS.map(function (cheat, index) {
-      const body = cheat.table ? tableHtml(cheat.table) : codeBlock(cheat.code);
+    if (!CHEATS.length) {
       return (
-        '<details class="cheat"' + (index === 0 ? " open" : "") + ">" +
-        '<summary><span>' + esc(cheat.title) + '</span><span class="meta">' + esc(cheat.tag) + "</span></summary>" +
-        '<div class="cheat__body">' +
-        (cheat.note ? '<p class="cheat__note">' + esc(cheat.note) + "</p>" : "") +
-        body +
-        "</div></details>"
+        '<section class="row hero empty"><div>' +
+        '<p class="eyebrow">No sections</p>' +
+        "<h1>The cheat sheet is empty.</h1>" +
+        '<p class="lede">Add sections to <code>learning/study/cheatsheet.json</code>.</p>' +
+        "</div></section>"
       );
-    }).join("");
+    }
 
-    return (
+    const groups = new Map();
+    CHEATS.forEach(function (section) {
+      if (!groups.has(section.group)) groups.set(section.group, []);
+      groups.get(section.group).push(section);
+    });
+    const order = GROUP_ORDER.concat(
+      Array.from(groups.keys()).filter(function (group) {
+        return GROUP_ORDER.indexOf(group) === -1;
+      })
+    );
+
+    let html =
       '<section class="row section-head"><h2>Cheatsheet</h2>' +
       '<span class="meta">write these from memory</span></section>' +
-      details
-    );
+      '<section class="row cheat-search">' +
+      '<input id="cheatSearch" type="text" placeholder="Filter sections..." value="' +
+      esc(cheatQuery) + '" autocomplete="off" spellcheck="false">' +
+      '<span class="meta" id="cheatCount">' + CHEATS.length + " of " + CHEATS.length +
+      " sections</span></section>";
+
+    let index = 0;
+    order.forEach(function (group) {
+      const sections = groups.get(group);
+      if (!sections) return;
+      html += '<section class="cheat-group" data-group="' + esc(group) + '">' +
+        '<p class="cheat-group__title">' + esc(group) +
+        ' <span class="meta">' + sections.length + "</span></p>";
+      sections.forEach(function (section) {
+        const body = section.table ? tableHtml(section.table) : codeBlock(section.code);
+        html += '<details class="cheat" data-search="' + esc(cheatText(section)) + '"' +
+          (index === 0 ? " open" : "") + ">" +
+          '<summary><span>' + esc(section.title) + '</span><span class="meta">' +
+          esc(section.tag) + "</span></summary>" +
+          '<div class="cheat__body">' +
+          (section.note ? '<p class="cheat__note">' + esc(section.note) + "</p>" : "") +
+          body +
+          "</div></details>";
+        index += 1;
+      });
+      html += "</section>";
+    });
+    return html;
+  }
+
+  function filterCheats() {
+    const query = cheatQuery.trim().toLowerCase();
+    let visible = 0;
+    document.querySelectorAll(".cheat[data-search]").forEach(function (element) {
+      const match = !query || element.dataset.search.indexOf(query) !== -1;
+      element.hidden = !match;
+      if (match) visible += 1;
+    });
+    document.querySelectorAll(".cheat-group").forEach(function (group) {
+      group.hidden = !group.querySelector(".cheat:not([hidden])");
+    });
+    const count = document.getElementById("cheatCount");
+    if (count) count.textContent = visible + " of " + CHEATS.length + " sections";
   }
 
   function tableHtml(rows) {
@@ -1509,6 +1591,8 @@
       rerenderSolve(true);
     } else if (action === "toggle-solved") {
       toggleSolved();
+    } else if (action === "run-sheet") {
+      runSheet();
     } else if (action === "sheet-copy") {
       copySheet();
     } else if (action === "sheet-reset") {
@@ -1550,6 +1634,9 @@
       state.card.typed = event.target.value;
     } else if (event.target.id === "sheet") {
       recordSheetValue(event.target.value);
+    } else if (event.target.id === "cheatSearch") {
+      cheatQuery = event.target.value;
+      filterCheats();
     }
   });
 
@@ -1621,6 +1708,7 @@
       afterGraphRender();
     } else if (state.view === "cheatsheet") {
       els.view.innerHTML = cheatsheetHtml();
+      filterCheats();
     } else {
       els.view.innerHTML = homeHtml();
     }
@@ -1802,6 +1890,7 @@
       CONCEPTS = content.concepts || [];
       PROBLEMS = content.problems || [];
       PRACTICE = content.practice || [];
+      CHEATS = content.cheatsheet || [];
       GRAPH = content.graph || { nodes: [], edges: [] };
       setupSolveIndex();
       bootView();

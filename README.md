@@ -13,8 +13,12 @@ drills, a two-pane problem workspace, and a canvas knowledge graph.
   predict-output, scheduled with a small SM-2 variant.
 - **101 problems** in the Solve workspace: 14 curated with solution variants plus
   **87 parsed from `practice/*.py`** (statement, examples, constraints, your code).
-- **Solve**: problem and syntax-highlighted code on the left, `Show solution` with
-  variants, your own sheet on the right, autosaved per problem.
+- **Solve**: problem and syntax-highlighted code on the left, `Show solution`
+  with variants, and your own sheet on the right. The sheet has live syntax
+  highlighting, line numbers, autosave, and `Run tests` against the practice
+  file's tests (pass/fail plus expected vs. got).
+- **Cheatsheet**: 31 sections (patterns, graphs, DP, linked list, trees, matrix,
+  bits, math, design, strings, interview checklist), grouped and searchable.
 - **Graph**: a canvas map of the 30 concepts with `reviewed / total` progress.
   Hover for details, click a node to start a drill session.
 - Daily goal, streak, light/dark mode, export/import of progress.
@@ -48,6 +52,9 @@ docker run --rm -p 8765:8765 ghcr.io/adriantuci1/dsa-study:latest
 The container is stateless: progress and sheets live in your browser's
 `localStorage`.
 
+`Run tests` executes your sheet locally in a subprocess with a CPU/time limit.
+The server binds `127.0.0.1` by default; do not expose the port to the internet.
+
 ### Local Python
 
 ```bash
@@ -69,6 +76,7 @@ JavaScript.
 | `learning/study_extras.py` | multiple-choice, fill-in, predict-output drills |
 | `learning/solve_bank.py` | curated problems with solution variants |
 | `practice/*.py` | problems parsed from the practice files |
+| `learning/study/cheatsheet.json` | cheat sheet sections |
 | `learning/study/graph.json` | knowledge graph nodes and edges |
 
 Validate all sources without starting the server:

@@ -167,11 +167,17 @@ def parse_file(path, filename, prefix, concept):
 
         implemented = bool(code) and "raise NotImplementedError" not in code
         syntax_ok = True
+        function = None
         if code:
             try:
-                ast.parse(code)
+                tree = ast.parse(code)
+                for node in tree.body:
+                    if isinstance(node, ast.FunctionDef):
+                        function = node.name
+                        break
             except SyntaxError:
                 syntax_ok = False
+        runnable = bool(function) and "if __name__ == \"__main__\":" in "\n".join(lines)
 
         source = "practice/" + filename
         note = "Read from %s on the content server." % source
@@ -195,6 +201,8 @@ def parse_file(path, filename, prefix, concept):
             "leetcode": meta["leetcode"],
             "implemented": implemented,
             "syntax_ok": syntax_ok,
+            "function": function,
+            "runnable": runnable,
             "variants": [{
                 "name": variant_name,
                 "complexity": source,
